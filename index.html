@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroVeda Organic - Ultimate Farming PWA</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Strict Square Design Protocol - 0px Border Radius */
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Segoe UI', Roboto, sans-serif; 
+      border-radius: 0px !important;
+    }
+    
+    body { 
+      background: #eef5eb;
+      color: #1e293b; 
+      padding-bottom: 75px; 
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background: #0f172a;
+      color: #f1f5f9;
+    }
+    body.dark-mode .card,
+    body.dark-mode .crop-item-box,
+    body.dark-mode .ai-response,
+    body.dark-mode .dropdown-menu,
+    body.dark-mode .bottom-nav-bar {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+    body.dark-mode input, 
+    body.dark-mode select, 
+    body.dark-mode textarea {
+      background: #0f172a !important;
+      color: #f1f5f9 !important;
+      border-color: #475569 !important;
+    }
+    body.dark-mode .menu-item {
+      background: #1e293b !important;
+      color: #38bdf8 !important;
+      border-bottom: 1px solid #334155 !important;
+    }
+    body.dark-mode .menu-item:hover {
+      background: #334155 !important;
+    }
+    body.dark-mode .nav-item {
+      color: #94a3b8 !important;
+    }
+    body.dark-mode .nav-item.active {
+      color: #4ade80 !important;
+      background: #064e3b !important;
+    }
+
+    header {
+      background: #134e1c;
+      color: #ffffff;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #0d3814;
+      position: relative;
+    }
+    header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+    header p { font-size: 10px; opacity: 0.9; margin-top: 1px; }
+
+    .menu-btn {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 2px solid #38bdf8;
+      padding: 6px 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 56px;
+      left: 10px;
+      background: #ffffff;
+      border: 3px solid #134e1c;
+      width: 260px;
+      z-index: 3000;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .menu-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      color: #134e1c;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+    }
+    .menu-item:hover { background: #e8f5e9; }
+    .menu-divider { border-top: 2px dashed #94a3b8; margin: 4px 0; }
+
+    .bottom-nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
+      border-top: 3px solid #134e1c;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 2500;
+      padding: 6px 0;
+    }
+    .nav-item {
+      flex: 1;
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 9px;
+      font-weight: bold;
+      color: #475569;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .nav-item span { font-size: 16px; margin-bottom: 2px; }
+    .nav-item.active {
+      color: #134e1c;
+      background: #e8f5e9;
+      border-top: 3px solid #134e1c;
+    }
+
+    .gps-bar {
+      background: #0f172a;
+      color: #38bdf8;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: bold;
+      border-bottom: 2px solid #0288d1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pwa-install-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab-content { display: none; padding: 12px 15px; }
+    .tab-content.active { display: block; }
+
+    .login-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.9);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 4000; padding: 20px;
+    }
+    .login-box {
+      background: #ffffff; padding: 20px; width: 100%; max-width: 360px;
+      border: 3px solid #134e1c; color: #1e293b;
+    }
+    .login-box h2 { font-size: 16px; margin-bottom: 10px; text-align: center; }
+
+    .card {
+      background: #ffffff; padding: 16px; margin-bottom: 14px;
+      border: 2px solid #b7dfb3;
+    }
+    .organic-card { background: #f4faf2; border: 2px solid #81c784; }
+    .profit-card { background: #f0fdf4; border: 2px solid #16a34a; }
+    .soil-card { background: #fffbeb; border: 2px solid #d97706; }
+    .disease-card { background: #fffbf0; border: 2px solid #d97706; }
+
+    h2 { color: #134e1c; font-size: 14px; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; }
+    body.dark-mode h2 { color: #4ade80; }
+
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; margin: 6px 0;
+      border: 1px solid #94a3b8; font-size: 13px; background: #ffffff;
+    }
+
+    button.action-btn {
+      width: 100%; background-color: #134e1c; color: white;
+      border: none; padding: 11px; font-size: 13px; font-weight: bold;
+      cursor: pointer; margin-top: 6px;
+    }
+
+    .tracker-weather-summary {
+      background: #0288d1; color: white; padding: 10px 12px;
+      margin-bottom: 12px; border: 2px solid #01579b;
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+    }
+
+    .square-quote-box {
+      background: #1e293b; color: #ffffff; border: 2px solid #38bdf8;
+      padding: 14px; text-align: center; margin-bottom: 14px;
+    }
+    .quote-time { font-size: 22px; font-weight: bold; color: #38bdf8; letter-spacing: 1px; }
+    .quote-date { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+
+    .hero-weather-box {
+      background: linear-gradient(135deg, #0288d1, #01579b);
+      color: #ffffff; border: 3px solid #0288d1; padding: 20px 16px;
+      text-align: center; margin-bottom: 14px;
+    }
+    .hero-weather-temp { font-size: 42px; font-weight: 800; line-height: 1; margin: 8px 0; color: #ffffff; }
+    .hero-weather-desc { font-size: 14px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; color: #e0f2fe; }
+    .hero-weather-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+      margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.3);
+    }
+    .hero-stat-item { background: rgba(255, 255, 255, 0.15); padding: 8px; font-size: 11px; text-align: center; }
+    .hero-stat-item span { display: block; font-size: 14px; font-weight: bold; margin-top: 2px; }
+
+    .crop-item-box { background: #f8fafc; border: 2px solid #cbd5e1; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; }
+    .crop-icon { font-size: 2.2rem; flex-shrink: 0; }
+    .crop-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+
+    .ai-response {
+      background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px;
+      margin-top: 10px; display: none; white-space: pre-line; line-height: 1.5; font-size: 13px;
+    }
+
+    .chat-box-container {
+      background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px;
+      height: 220px; overflow-y: scroll; margin-bottom: 8px; font-size: 12px;
+    }
+    .chat-bubble { padding: 8px 10px; margin: 6px 0; max-width: 85%; }
+    .chat-user { background: #dbeafe; color: #1e3a8a; margin-left: auto; text-align: right; }
+    .chat-ai { background: #f0fdf4; color: #14532d; border-left: 3px solid #16a34a; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginOverlay" class="login-overlay" style="display:none;">
+    <div class="login-box">
+      <h2>🔑 AgroVeda Kisan Login</h2>
+      <p style="font-size: 11px; color: #64748b; margin-bottom: 10px; text-align: center;">Apna profile aur farm data save karne ke liye login karein.</p>
+      <input type="text" id="loginUser" placeholder="Kisan Ka Naam">
+      <input type="text" id="loginPhone" placeholder="Mobile Number">
+      <button class="action-btn" onclick="handleLogin()">Login & Save 📲</button>
+      <button class="action-btn" style="background:#475569; margin-top: 6px;" onclick="skipLogin()">Guest Mode</button>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button class="menu-btn" onclick="toggleMenu()">⋮</button>
+      <div>
+        <h1>🌿 AgroVeda Organic</h1>
+        <p>Smart Farming & Profile Suite</p>
+      </div>
+    </div>
+    <div id="userBadge" style="font-size: 10px; background:#0288d1; padding:2px 6px; color:white; cursor:pointer;" onclick="openLogin()">LOGIN</div>
+  </header>
+
+  <!-- DROPDOWN MENU -->
+  <div id="dropdownMenu" class="dropdown-menu">
+    <div class="menu-item" onclick="switchTab('trackerTab')">📊 Farm & Task Tracker</div>
+    <div class="menu-item" onclick="switchTab('soilTab')">🌱 AI Fasal Recommendation</div>
+    <div class="menu-item" onclick="switchTab('aiExpertTab')">🤖 AI Farming Expert (Chat)</div>
+    <div class="menu-item" onclick="switchTab('profileTab')">👤 My Profile</div>
+    <div class="menu-item" onclick="switchTab('settingsTab')">⚙️ Settings</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" onclick="switchTab('diseaseTab')">🔬 AI Disease Scanner</div>
+    <div class="menu-item" onclick="switchTab('weatherTab')">🌤️ Weather Dashboard</div>
+    <div class="menu-item" onclick="switchTab('profitTab')">💰 Money & Profit Tracker</div>
+  </div>
+
+  <div class="gps-bar">
+    <div>📍 Location: <span id="gpsCityLabel" style="color:#fde047;">Detecting...</span></div>
+    <div>
+      <button id="pwaInstallBtn" class="pwa-install-btn" style="display:none;" onclick="installPWA()">📲 Install</button>
+    </div>
+  </div>
+
+  <!-- TAB 1: TRACKER -->
+  <div id="trackerTab" class="tab-content active">
+    <div class="square-quote-box">
+      <div class="quote-time" id="liveClock">00:00:00 AM</div>
+      <div class="quote-date" id="liveDate">--/--/----</div>
+    </div>
+
+    <div class="tracker-weather-summary">
+      <div>🌤️ <b>Weather:</b> <span id="trackerTemp">--°C</span></div>
+      <div>💧 Humidity: <span id="trackerHumidity">--%</span></div>
+      <div>💨 Wind: <span id="trackerWind">-- km/h</span></div>
+    </div>
+
+    <div class="card">
+      <h2>🌾 Add New Crop to Farm</h2>
+      <p style="font-size: 11px; opacity: 0.8; margin-bottom: 6px;">Fasal jodein, app apne aap har naye din ke naye tasks taiyar karega:</p>
+      <input type="text" id="newCropName" placeholder="Fasal ka Naam (e.g. Gehun, Dhan, Tamatar)">
+      <input type="number" id="newCropDays" placeholder="Buaai ko kitne din hue?">
+      <button class="action-btn" onclick="addNewCrop()">➕ Add Crop</button>
+    </div>
+
+    <div class="card">
+      <h2>📋 Today's Farm & Pie Chart Progress</h2>
+      <!-- Chart Canvas for Crop Days Overview -->
+      <div style="background: #ffffff; padding: 10px; border: 1px solid #cbd5e1; margin-bottom: 12px; text-align: center;">
+        <canvas id="cropPieChart" style="max-height: 200px; width: 100%;"></canvas>
+      </div>
+      <div id="myCropsList"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: AI FASAL RECOMMENDATION -->
+  <div id="soilTab" class="tab-content">
+    <div class="card soil-card">
+      <h2 style="color: #b45309;">🌱 AI Fasal Recommendation (ऑटो सीजन और मिट्टी आधारित)</h2>
+      <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">
+        AI automatisch detect karega ki abhi kaun sa season chal raha hai aur mitti ke hisab se behtareen fasal kaun si hai:
+      </p>
+
+      <div style="background: #fff; padding: 10px; border: 1px solid #d97706; margin-bottom: 8px; font-size: 12px;">
+        📅 <b>Current Detected Season:</b> <span id="autoSeasonLabel" style="color: #b45309; font-weight: bold;">Loading...</span>
+      </div>
+
+      <select id="soilTypeSelect">
+        <option value="alluvial">जलोढ़ मिट्टी (Alluvial Soil) - धान, गेहूं, गन्ना</option>
+        <option value="black">काली मिट्टी (Black Soil) - कपास, सोयाबीन, गेहूं</option>
+        <option value="red">लाल मिट्टी (Red Soil) - बाजरा, मक्का, मूंगफली</option>
+        <option value="sandy">बलुई/रेतीली मिट्टी (Sandy Soil) - बाजरा, ज्वार, मूंग</option>
+      </select>
+
+      <button class="action-btn" style="background-color: #d97706;" onclick="getAutoAIRecommendation()">🤖 Auto Fasal Recommendation Dekhein 🔍</button>
+
+      <div id="soilResult" class="ai-response" style="border: 1px solid #d97706; display: block;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PROFESSIONAL AI FARMING EXPERT CHAT -->
+  <div id="aiExpertTab" class="tab-content">
+    <div class="card" style="border: 2px solid #0288d1;">
+      <h2 style="color: #0288d1;">🤖 AgroVeda Professional AI Farming Expert</h2>
+      <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">
+        Kheti, khad, bimari aur mausam se juda koi bhi sawal direct AI se baat karke poochhein:
+      </p>
+
+      <div id="chatContainer" class="chat-box-container">
+        <div class="chat-bubble chat-ai">नमस्ते किसान भाई! मैं आपका प्रोफेशनल कृषि AI सलाहकार हूँ। बताइए आज फसल में क्या समस्या है या कौन सी जानकारी चाहिए?</div>
+      </div>
+
+      <input type="text" id="userChatInput" placeholder="Yahan apna sawal likhein (e.g. Tamatar me kida lag gaya hai)..." onkeypress="if(event.key === 'Enter') sendAIChatMessage()">
+      <button class="action-btn" style="background-color: #0288d1;" onclick="sendAIChatMessage()">Send Message to AI 🚀</button>
+    </div>
+  </div>
+
+  <!-- TAB 4: PROFILE -->
+  <div id="profileTab" class="tab-content">
+    <div class="card">
+      <h2>👤 Kisan Profile Details</h2>
+      <input type="text" id="profileName" placeholder="Kisan Ka Naam">
+      <input type="text" id="profilePhone" placeholder="Mobile Number">
+      <input type="text" id="profileLocation" placeholder="Gaon / Zila / State">
+      <input type="number" id="profileTotalLand" placeholder="Kul Zameen (Acre me)">
+      <button class="action-btn" onclick="saveProfileDetails()">Save Profile Data 💾</button>
+    </div>
+  </div>
+
+  <!-- TAB 5: SETTINGS -->
+  <div id="settingsTab" class="tab-content">
+    <div class="card">
+      <h2>⚙️ App Settings</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #cbd5e1;">
+        <span style="font-size: 13px; font-weight: bold;">🌙 Dark Mode Theme</span>
+        <input type="checkbox" id="darkModeToggle" style="width: 22px; height: 22px; cursor: pointer;" onchange="toggleDarkMode()">
+      </div>
+      <div style="margin-top: 15px;">
+        <button class="action-btn" style="background-color: #ef4444;" onclick="clearAllData()">⚠️ Clear All App Data & Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: DISEASE SCANNER -->
+  <div id="diseaseTab" class="tab-content">
+    <div class="card disease-card">
+      <h2 style="color: #d97706;">🔬 AI Crop Disease Scanner</h2>
+      <input type="file" id="cropImage" accept="image/*" capture="environment">
+      <button class="action-btn" style="background-color: #d97706;" onclick="scanCropDisease()">Start AI Diagnosis 🔍</button>
+      <div id="scanResult" class="ai-response"></div>
+    </div>
+  </div>
+
+  <!-- TAB 7: WEATHER -->
+  <div id="weatherTab" class="tab-content">
+    <div class="hero-weather-box">
+      <div style="font-size: 11px; text-transform: uppercase; opacity: 0.9;">📍 Live GPS Mausam</div>
+      <div class="hero-weather-temp" id="heroTemp">--°C</div>
+      <div class="hero-weather-desc" id="heroCondition">Fetching...</div>
+      <div class="hero-weather-grid">
+        <div class="hero-stat-item">💧 Humidity<span id="heroHumidity">--%</span></div>
+        <div class="hero-stat-item">💨 Wind Speed<span id="heroWind">-- km/h</span></div>
+        <div class="hero-stat-item">🌧️ Rain Chance<span id="heroRain">0%</span></div>
+        <div class="hero-stat-item">☀️ UV Rating<span id="heroUV">Normal</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 8: PROFIT TRACKER -->
+  <div id="profitTab" class="tab-content">
+    <div class="card profit-card">
+      <h2 style="color: #15803d;">💰 Money & Profit Tracker</h2>
+      <select id="profitCropSelect">
+        <option value="wheat">गेहूं (Wheat - per Acre)</option>
+        <option value="rice">धान (Rice - per Acre)</option>
+        <option value="tomato">टमाटर (Tomato - per Acre)</option>
+        <option value="mustard">सरसों (Mustard - per Acre)</option>
+      </select>
+      <input type="number" id="calcLandAcre" placeholder="Kul Zameen (Acre me)" value="1">
+      <button class="action-btn" style="background-color: #16a34a;" onclick="calculateCropProfit()">Calculate Profit 🧮</button>
+      <div id="profitResult" class="ai-response" style="background:#ffffff; border: 1px solid #16a34a;"></div>
+    </div>
+  </div>
+
+  <!-- FIXED BOTTOM NAVIGATION BAR -->
+  <div class="bottom-nav-bar">
+    <button class="nav-item active" onclick="switchTab('trackerTab', this)"><span>📊</span>Farm</button>
+    <button class="nav-item" onclick="switchTab('soilTab', this)"><span>🌱</span>Fasal Rec</button>
+    <button class="nav-item" onclick="switchTab('aiExpertTab', this)"><span>🤖</span>AI Expert</button>
+    <button class="nav-item" onclick="switchTab('diseaseTab', this)"><span>🔬</span>Scan</button>
+    <button class="nav-item" onclick="switchTab('weatherTab', this)"><span>🌤️</span>Weather</button>
+    <button class="nav-item" onclick="switchTab('profileTab', this)"><span>👤</span>Profile</button>
+  </div>
+
+  <script>
+    let userLat = null;
+    let userLon = null;
+    let deferredPrompt;
+    let myPieChartInstance = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('pwaInstallBtn').style.display = 'inline-block';
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('pwaInstallBtn').style.display = 'none';
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    window.onclick = function(event) {
+      if (!event.target.matches('.menu-btn')) {
+        const menu = document.getElementById('dropdownMenu');
+        if (menu && menu.style.display === 'block') menu.style.display = 'none';
+      }
+    }
+
+    function switchTab(tabId, btnElement) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) targetTab.classList.add('active');
+      document.getElementById('dropdownMenu').style.display = 'none';
+
+      if (btnElement) {
+        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+      } else {
+        document.querySelectorAll('.nav-item').forEach(btn => {
+          if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const clockEl = document.getElementById('liveClock');
+      const dateEl = document.getElementById('liveDate');
+      if (clockEl) clockEl.innerText = now.toLocaleTimeString();
+      if (dateEl) dateEl.innerText = now.toLocaleDateString('en-GB');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function getCurrentSeasonName() {
+      const month = new Date().getMonth() + 1; 
+      if (month >= 10 || month <= 3) return "रबी सीजन (Rabi - Sardiyon ki Fasal)";
+      else if (month >= 7 && month <= 9) return "खरीफ सीजन (Kharif - Barsati Fasal)";
+      else return "जायद सीजन (Zaid - Garmiyon ki Fasal)";
+    }
+
+    window.onload = function() {
+      checkSavedUser();
+      renderMyCrops();
+      loadProfileData();
+      checkInitialDarkMode();
+
+      const seasonText = getCurrentSeasonName();
+      document.getElementById('autoSeasonLabel').innerText = seasonText;
+      getAutoAIRecommendation();
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            fetchWeatherByCoords(userLat, userLon);
+          },
+          () => { fetchCityByIP(); }
+        );
+      } else { fetchCityByIP(); }
+    };
+
+    function openLogin() {
+      document.getElementById('loginOverlay').style.display = "flex";
+    }
+
+    function handleLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPhone').value.trim();
+      if (!u) return alert("Kripya Kisan ka Naam bharein!");
+      localStorage.setItem('agro_user', u);
+      localStorage.setItem('agro_phone', p);
+      document.getElementById('userBadge').innerText = u.toUpperCase();
+      document.getElementById('loginOverlay').style.display = "none";
+      loadProfileData();
+    }
+
+    function skipLogin() {
+      document.getElementById('loginOverlay').style.display = "none";
+    }
+
+    function checkSavedUser() {
+      const u = localStorage.getItem('agro_user');
+      if (u) {
+        document.getElementById('userBadge').innerText = u.toUpperCase();
+      } else {
+        document.getElementById('userBadge').innerText = "LOGIN";
+      }
+    }
+
+    function saveProfileDetails() {
+      const name = document.getElementById('profileName').value.trim();
+      const phone = document.getElementById('profilePhone').value.trim();
+      const loc = document.getElementById('profileLocation').value.trim();
+      const land = document.getElementById('profileTotalLand').value.trim();
+      if (!name) return alert("Naam bharna anivarya hai!");
+      localStorage.setItem('agro_user', name);
+      localStorage.setItem('agro_phone', phone);
+      localStorage.setItem('agro_location', loc);
+      localStorage.setItem('agro_land', land);
+      document.getElementById('userBadge').innerText = name.toUpperCase();
+      alert("Profile data save ho gaya hai!");
+    }
+
+    function loadProfileData() {
+      if (document.getElementById('profileName')) document.getElementById('profileName').value = localStorage.getItem('agro_user') || '';
+      if (document.getElementById('profilePhone')) document.getElementById('profilePhone').value = localStorage.getItem('agro_phone') || '';
+      if (document.getElementById('profileLocation')) document.getElementById('profileLocation').value = localStorage.getItem('agro_location') || '';
+      if (document.getElementById('profileTotalLand')) document.getElementById('profileTotalLand').value = localStorage.getItem('agro_land') || '';
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.getElementById('darkModeToggle').checked;
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('agro_dark_mode', 'enabled');
+      } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('agro_dark_mode', 'disabled');
+      }
+    }
+
+    function checkInitialDarkMode() {
+      if (localStorage.getItem('agro_dark_mode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+        if (document.getElementById('darkModeToggle')) document.getElementById('darkModeToggle').checked = true;
+      }
+    }
+
+    function clearAllData() {
+      if (confirm("Kya aap saara data delete karna chahte hain?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    const GEMINI_API_KEY = 'AQ.Ab8RN6IkfxMYv7sak4yNGLFPpsif0sPRnMNMHKuWKGAphtiHAg';
+
+    async function callGeminiAI(promptText) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      const systemPrompt = `Tum ek expert Professional Agricultural AI Consultant ho. Tumhara kaam kisanon ko season, mitti, weather aur organic kheti ke hisab se behtareen fasal suggest karna aur unke kheti se jude sawalon ka behtareen aur saral Hindi (Hinglish) mein jawab dena hai.`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\n\nUser: " + promptText }] }] })
+        });
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+      } catch (err) {
+        return "🤖 **AI Expert:** Maaf kijiye, abhi server se connect nahi ho paya. Kripya thodi der baad koshish karein.";
+      }
+    }
+
+    async function getAutoAIRecommendation() {
+      const soil = document.getElementById('soilTypeSelect').value;
+      const season = getCurrentSeasonName();
+
+      const resBox = document.getElementById('soilResult');
+      resBox.style.display = "block";
+      resBox.innerHTML = "⏳ AI current mausam aur mitti ke hisab se recommendation taiyar kar raha hai...";
+
+      const query = `Current Season: ${season}, Mitti ka prakar: ${soil}. Iske anusar is current season mein sabse behtareen aur zyada munafa dene wali fasal kaun si hai? Uska poora vivaran aur organic salah dijiye.`;
+      const reply = await callGeminiAI(query);
+      resBox.innerHTML = `<h3 style="color: #b45309; font-size:13px; margin-bottom:6px;">🌱 AI Fasal Recommendation Report (${season}):</h3>` + reply;
+    }
+
+    async function sendAIChatMessage() {
+      const inputEl = document.getElementById('userChatInput');
+      const container = document.getElementById('chatContainer');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      container.innerHTML += `<div class="chat-bubble chat-user">${text}</div>`;
+      inputEl.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      const loadingId = 'loading_' + Date.now();
+      container.innerHTML += `<div id="${loadingId}" class="chat-bubble chat-ai">🤖 AI soch raha hai...</div>`;
+      container.scrollTop = container.scrollHeight;
+
+      const aiReply = await callGeminiAI(text);
+      document.getElementById(loadingId).remove();
+
+      container.innerHTML += `<div class="chat-bubble chat-ai">${aiReply}</div>`;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    const cropMaturityDatabase = { "wheat": 120, "gehun": 120, "rice": 130, "dhan": 130, "maize": 100, "makka": 100, "mustard": 110, "sarson": 110, "tomato": 90, "tamatar": 90 };
+    function getEstimatedTotalDays(cropName) {
+      const cleanName = cropName.toLowerCase().trim();
+      for (let key in cropMaturityDatabase) { if (cleanName.includes(key)) return cropMaturityDatabase[key]; }
+      return 110;
+    }
+
+    const cropIconsMap = { 'gehun': '🌾', 'wheat': '🌾', 'dhan': '🍚', 'rice': '🍚', 'makka': '🌽', 'maize': '🌽', 'sarson': '🌼', 'mustard': '🌼', 'tamatar': '🍅', 'tomato': '🍅', 'default': '🌱' };
+    function getCropIcon(cropName) {
+      const clean = cropName.toLowerCase().trim();
+      for (let key in cropIconsMap) { if (clean.includes(key)) return cropIconsMap[key]; }
+      return cropIconsMap['default'];
+    }
+
+    function addNewCrop() {
+      const name = document.getElementById('newCropName').value.trim();
+      const days = parseFloat(document.getElementById('newCropDays').value);
+      if (!name || isNaN(days)) return alert("Kripya Fasal ka naam aur din bharein.");
+      const crops = JSON.parse(localStorage.getItem('agro_multi_crops') || '[]');
+      crops.push({ id: Date.now(), name: name, days: days, tasks: {} });
+      localStorage.setItem('agro_multi_crops', JSON.stringify(crops));
+      document.getElementById('newCropName').value = '';
+      document.getElementById('newCropDays').value = '';
+      renderMyCrops();
+    }
+
+    function deleteCrop(id) {
+      let crops = JSON.parse(localStorage.getItem('agro_multi_crops') || '[]');
+      crops = crops.filter(c => c.id !== id);
+      localStorage.setItem('agro_multi_crops', JSON.stringify(crops));
+      renderMyCrops();
+    }
+
+    function toggleCropTask(cropId, taskIndex) {
+      let crops = JSON.parse(localStorage.getItem('agro_multi_crops') || '[]');
+      crops = crops.map(c => {
+        if (c.id === cropId) c.tasks[taskIndex] = !c.tasks[taskIndex];
+        return c;
+      });
+      localStorage.setItem('agro_multi_crops', JSON.stringify(crops));
+      renderMyCrops();
+    }
+
+    function renderMyCrops() {
+      const container = document.getElementById('myCropsList');
+      if (!container) return;
+      const crops = JSON.parse(localStorage.getItem('agro_multi_crops') || '[]');
+      
+      updateCropPieChart(crops);
+
+      if (crops.length === 0) {
+        container.innerHTML = '<p style="font-size: 12px; opacity: 0.7; text-align: center;">Abhi koi fasal add nahi ki gayi hai.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      crops.forEach(c => {
+        const total = getEstimatedTotalDays(c.name);
+        const passed = Math.min(c.days, total);
+        const remaining = Math.max(0, total - passed);
+        const percent = Math.round((passed / total) * 100);
+        const icon = getCropIcon(c.name);
+        
+        const box = document.createElement('div');
+        box.className = 'crop-item-box';
+        box.innerHTML = `
+          <div class="crop-icon">${icon}</div>
+          <div style="flex-grow:1;">
+            <div class="crop-item-header">
+              <strong style="font-size: 14px;">${c.name} (${percent}% Complete)</strong>
+              <button style="background:#ef4444; color:white; border:none; padding:2px 6px; font-size:10px; cursor:pointer;" onclick="deleteCrop(${c.id})">Delete</button>
+            </div>
+            <div style="font-size: 11px; color: #16a34a; font-weight: bold; margin-bottom: 4px;">✅ Ho Chuke Din: ${passed}d | ⏳ Baaki Din: ${remaining}d (Total: ${total}d)</div>
+            <div style="font-size: 11px;">
+              <label><input type="checkbox" ${c.tasks[0] ? 'checked' : ''} onchange="toggleCropTask(${c.id}, 0)"> 💧 Sinchai Jaanch</label>
+              <label style="margin-left:10px;"><input type="checkbox" ${c.tasks[1] ? 'checked' : ''} onchange="toggleCropTask(${c.id}, 1)"> 🌿 Nindai</label>
+            </div>
+          </div>
+        `;
+        container.appendChild(box);
+      });
+    }
+
+    function updateCropPieChart(crops) {
+      const ctx = document.getElementById('cropPieChart').getContext('2d');
+      
+      let labels = [];
+      let passedData = [];
+      let remainingData = [];
+
+      if (crops.length === 0) {
+        labels = ['Koi Fasal Nahi'];
+        passedData = [1];
+        remainingData = [0];
+      } else {
+        crops.forEach(c => {
+          const total = getEstimatedTotalDays(c.name);
+          const passed = Math.min(c.days, total);
+          const remaining = Math.max(0, total - passed);
+          labels.push(c.name);
+          passedData.push(passed);
+          remainingData.push(remaining);
+        });
+      }
+
+      if (myPieChartInstance) {
+        myPieChartInstance.destroy();
+      }
+
+      myPieChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels.map(l => l + " (Beete hue din)"),
+          datasets: [{
+            data: passedData,
+            backgroundColor: ['#16a34a', '#0288d1', '#d97706', '#9333ea', '#db2777'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+            title: { display: true, text: '🌾 Fasal Ke Poore Hue Din Ka Chart', font: { size: 12 } }
+          }
+        }
+      });
+    }
+
+    function fetchCityByIP() {
+      fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
+        if (data.city) {
+          document.getElementById('gpsCityLabel').innerText = data.city.toUpperCase();
+          getWeatherDataByCity(data.city);
+        }
+      }).catch(() => {});
+    }
+
+    async function fetchWeatherByCoords(lat, lon) {
+      try {
+        const response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+        const data = await response.json();
+        const city = data.nearest_area[0].areaName[0].value;
+        document.getElementById('gpsCityLabel').innerText = city.toUpperCase();
+        updateWeatherHero(data);
+      } catch (e) { fetchCityByIP(); }
+    }
+
+    async function getWeatherDataByCity(city) {
+      try {
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+        const data = await response.json();
+        updateWeatherHero(data);
+      } catch (e) {}
+    }
+
+    function updateWeatherHero(data) {
+      const cond = data.current_condition[0];
+      if (document.getElementById('heroTemp')) document.getElementById('heroTemp').innerText = `${cond.temp_C}°C`;
+      if (document.getElementById('heroCondition')) document.getElementById('heroCondition').innerText = cond.weatherDesc[0].value;
+      if (document.getElementById('heroHumidity')) document.getElementById('heroHumidity').innerText = `${cond.humidity}%`;
+      if (document.getElementById('heroWind')) document.getElementById('heroWind').innerText = `${cond.windspeedKmph} km/h`;
+      if (document.getElementById('trackerTemp')) document.getElementById('trackerTemp').innerText = `${cond.temp_C}°C`;
+      if (document.getElementById('trackerHumidity')) document.getElementById('trackerHumidity').innerText = `${cond.humidity}%`;
+      if (document.getElementById('trackerWind')) document.getElementById('trackerWind').innerText = `${cond.windspeedKmph} km/h`;
+    }
+
+    function scanCropDisease() {
+      const scanBox = document.getElementById('scanResult');
+      scanBox.style.display = "block";
+      setTimeout(() => {
+        scanBox.innerText = "✅ AI Diagnosis:\n• Fungal Blight detected.\n• Remedy: 10% Sour Buttermilk + Neem Oil spray.";
+      }, 1500);
+    }
+
+    const cropProfitDatabase = {
+      wheat: { name: "गेहूं (Wheat)", chemCost: 4500, orgCost: 2000, marketPrice: 2400, yield: 18, bonus: 25 },
+      rice: { name: "धान (Rice)", chemCost: 5500, orgCost: 2500, marketPrice: 2500, yield: 20, bonus: 20 },
+      tomato: { name: "टमाटर (Tomato)", chemCost: 12000, orgCost: 5000, marketPrice: 1500, yield: 120, bonus: 30 },
+      mustard: { name: "सरसों (Mustard)", chemCost: 3500, orgCost: 1500, marketPrice: 5500, yield: 8, bonus: 20 }
+    };
+
+    function calculateCropProfit() {
+      const cropKey = document.getElementById('profitCropSelect').value;
+      const acres = parseFloat(document.getElementById('calcLandAcre').value) || 1;
+      const data = cropProfitDatabase[cropKey];
+      const totalOrgCost = data.orgCost * acres;
+      const baseRevenue = data.yield * acres * data.marketPrice;
+      const netProfit = (baseRevenue + (baseRevenue * (data.bonus / 100))) - totalOrgCost;
+
+      const resBox = document.getElementById('profitResult');
+      resBox.style.display = "block";
+      resBox.innerHTML = `
+        <h3 style="color: #16a34a; font-size:13px; margin-bottom:6px;">📊 ${data.name} (${acres} Acre) Profit Report:</h3>
+        <p style="color: #16a34a; font-size: 14px; margin-top: 4px;">• <b>Estimated Net Profit:</b> <b>₹${Math.round(netProfit).toLocaleString()}</b> 🎉</p>
+      `;
+    }
+  </script>
+</body>
+</html>
